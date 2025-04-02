@@ -5,7 +5,7 @@ public class PlayerControllerCamera : MonoBehaviour
 {
     [SerializeField] GameObject[] cameraPositionCriterion;
     //[SerializeField] Animator cameraSwapAnimator;
-    [SerializeField] CinemachineCamera cineCam;
+    //[SerializeField] CinemachineCamera cineCam;
     int cameraPosIndex = 0;
     int cameraPosIndexMax;
 
@@ -16,11 +16,22 @@ public class PlayerControllerCamera : MonoBehaviour
         {
             Debug.LogError("Shibal Assign at least one camera on coordinate");
         }
+
+        //InitializeCameraAll();
+    }
+
+    void InitializeCameraAll()
+    {
+        for(int i = 0; i < cameraPosIndexMax; i++)
+        {
+            cameraPositionCriterion[i].SetActive(false);
+        }
     }
 
     // Update is called once per frame
     internal void SwapCameraPos()
     {
+        cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 1;
         if(cameraPosIndex == cameraPosIndexMax)
         {
             cameraPosIndex = 0;
@@ -29,19 +40,9 @@ public class PlayerControllerCamera : MonoBehaviour
         {
             cameraPosIndex++;
         }
+        cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 10;
+        
         Debug.Log("Changed camera pos as: " + cameraPositionCriterion[cameraPosIndex]);
-        cineCam.Follow = cameraPositionCriterion[cameraPosIndex].transform;
-        /*
-        if(cameraPosIndex == 1)
-        {
-            cameraSwapAnimator.SetInteger("CameraState", 3);
-            cameraPosIndex = 3;
-        }
-        else
-        {
-            cameraSwapAnimator.SetInteger("CameraState", 1);
-            cameraPosIndex = 1;
-        }
-        */
+        //cineCam.Follow = cameraPositionCriterion[cameraPosIndex].transform;
     }
 }
