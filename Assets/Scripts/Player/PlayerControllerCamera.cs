@@ -1,38 +1,36 @@
+using System;
+using System.Collections;
 using Unity.Cinemachine;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class PlayerControllerCamera : MonoBehaviour
 {
     [SerializeField] GameObject[] cameraPositionCriterion;
-    //[SerializeField] Animator cameraSwapAnimator;
-    //[SerializeField] CinemachineCamera cineCam;
+    private PlayerControllerManeuver maneuver;
+    private GameObject deathCamCinemachine;
+
     int cameraPosIndex = 0;
     int cameraPosIndexMax;
+    float shakeDuration = 0.25f;
+    float shakeMagnitude = 0.1f;
 
-    void Start()
+    // Initialization of camera that defines integrity
+    internal void InitializeMe(PlayerControllerManeuver playerControllerManeuver)
     {
+        maneuver = playerControllerManeuver;
         cameraPosIndexMax = cameraPositionCriterion.Length - 1;
         if(cameraPosIndexMax == -1)
         {
             Debug.LogError("Shibal Assign at least one camera on coordinate");
         }
-
-        //InitializeCameraAll();
     }
 
-    void InitializeCameraAll()
-    {
-        for(int i = 0; i < cameraPosIndexMax; i++)
-        {
-            cameraPositionCriterion[i].SetActive(false);
-        }
-    }
-
-    // Update is called once per frame
+    // Swap camera via tuning up property
     internal void SwapCameraPos()
     {
         cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 1;
-        if(cameraPosIndex == cameraPosIndexMax)
+        if(cameraPosIndex == cameraPosIndexMax) // If reached to max of list resets to 0
         {
             cameraPosIndex = 0;
         }
@@ -42,7 +40,57 @@ public class PlayerControllerCamera : MonoBehaviour
         }
         cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 10;
         
-        Debug.Log("Changed camera pos as: " + cameraPositionCriterion[cameraPosIndex]);
-        //cineCam.Follow = cameraPositionCriterion[cameraPosIndex].transform;
+        //Debug.Log("Changed camera pos as: " + cameraPositionCriterion[cameraPosIndex]);
+    }
+
+    // Show damage with cam
+    public IEnumerator ShakeCamera(ICinemachineCamera targetCamInterface)
+    {
+        // Shakes camera when damaged by modifying following offset as randomized Vector3
+        // target is GameManager.instance.mainCamera.ActiveVirtualCamera(ICinemachineCamera) but types of input will be CinemachineCamera mostly
+        // and resets offset as Vector3.zero
+        // As using IEnumerator
+
+        if (targetCamInterface == null) yield break;
+
+        CinemachineCamera targetCam = targetCamInterface as CinemachineCamera; // Get real camera from interface
+        Transform targetCamTransform = targetCam.gameObject.transform; // Get camera transform
+        Vector3 initPosOfCam = targetCamTransform.localPosition; // Set camera initial position
+
+        float shakeTimeElapsed = 0;
+
+        Debug.Log(targetCamInterface + " is using when damaged, Initial pos: " + initPosOfCam);
+
+        while (shakeTimeElapsed < shakeDuration)
+        {
+            shakeTimeElapsed += Time.deltaTime;
+            targetCamTransform.localPosition = initPosOfCam + RandomShake();
+            yield return null;
+        }
+
+        targetCamTransform.localPosition = initPosOfCam;
+    }
+
+    Vector3 RandomShake()
+    {
+        return new Vector3
+        (
+            Random.Range(-shakeMagnitude, shakeMagnitude),
+            Random.Range(-shakeMagnitude, shakeMagnitude),
+            Random.Range(-shakeMagnitude, shakeMagnitude)
+        );
+    }
+
+    // Show death cam via adding prefab of cinemachine Camera
+    internal void SetDeathCam()
+    {
+        deathCamCinemachine = GameManager.instance.InstanciateDeathCam(transform.position);
+        deathCamCinemachine.GetComponent<CinemachineCamera>().LookAt = gameObject.transform;
+        Debug.Log(deathCamCinemachine + " has been spawned");
+    }
+
+    internal void ResetDeathCam()
+    {
+        Destroy(deathCamCinemachine);
     }
 }
