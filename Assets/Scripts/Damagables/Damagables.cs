@@ -4,12 +4,8 @@ using UnityEngine;
 public class Damagables : MonoBehaviour
 {
     [SerializeField] int damageMagnitude = 40;
-
+    [SerializeField] bool isFallRelated = false;
     // Update is called once per frame
-    void Update()
-    {
-        transform.Rotate(Vector3.up * Time.deltaTime * 100f);
-    }
 
     void OnTriggerEnter(Collider col)
     {
@@ -18,8 +14,15 @@ public class Damagables : MonoBehaviour
             PlayerControllerStatus playerControllerStatus = col.GetComponent<PlayerControllerStatus>();
             if(playerControllerStatus)
             {
-                playerControllerStatus.SetDamage(damageMagnitude);
-            } 
+                if(isFallRelated)
+                {
+                    StartCoroutine(playerControllerStatus.InvokeDeadAsFall());
+                }
+                else
+                {
+                    playerControllerStatus.SetDamage(damageMagnitude);
+                }
+            }
         }
     }
 }

@@ -13,6 +13,9 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         instance = this;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     // Update is called once per frame
@@ -24,11 +27,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    internal GameObject InstanciateDeathCam(Vector3 installPos)
+    internal GameObject InstanciateDeathCam(Vector3 installPos, float distOfCamera)
     {
         Vector3 randomPosition = UnityEngine.Random.insideUnitSphere;
         randomPosition.y = 0; // y축을 고정 (필요에 따라 조정)
-        return Instantiate(deathCamObject, installPos + (Vector3.up * 2.25f) + (randomPosition.normalized * 5f), Quaternion.identity);
+        return Instantiate(deathCamObject, installPos + (Vector3.up * 2.25f) + (randomPosition.normalized * distOfCamera), Quaternion.identity);
     }
 
 }

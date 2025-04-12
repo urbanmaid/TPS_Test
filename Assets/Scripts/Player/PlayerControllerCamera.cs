@@ -7,12 +7,13 @@ using Random = UnityEngine.Random;
 public class PlayerControllerCamera : MonoBehaviour
 {
     [SerializeField] GameObject[] cameraPositionCriterion;
+    [SerializeField] GameObject[] cameraPositionCriterionWhenAiming;
     private PlayerControllerManeuver maneuver;
     private GameObject deathCamCinemachine;
 
-    int cameraPosIndex = 0;
+    [SerializeField] int cameraPosIndex = 0;
     int cameraPosIndexMax;
-    float shakeDuration = 0.25f;
+    float shakeDuration = 0.15f;
     float shakeMagnitude = 0.1f;
 
     // Initialization of camera that defines integrity
@@ -24,6 +25,13 @@ public class PlayerControllerCamera : MonoBehaviour
         {
             Debug.LogError("Shibal Assign at least one camera on coordinate");
         }
+
+        SetFirstCamera();
+    }
+
+    void SetFirstCamera()
+    {
+        cameraPositionCriterion[0].GetComponent<CinemachineCamera>().Priority = 10;
     }
 
     // Swap camera via tuning up property
@@ -41,6 +49,19 @@ public class PlayerControllerCamera : MonoBehaviour
         cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 10;
         
         //Debug.Log("Changed camera pos as: " + cameraPositionCriterion[cameraPosIndex]);
+    }
+    
+    internal void SetAim()
+    {
+        cameraPositionCriterionWhenAiming[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 10;
+        cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 1;
+        Debug.Log("Aiming");
+    }
+
+    internal void ResetAim()
+    {
+        cameraPositionCriterion[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 10;
+        cameraPositionCriterionWhenAiming[cameraPosIndex].GetComponent<CinemachineCamera>().Priority = 1;
     }
 
     // Show damage with cam
@@ -82,9 +103,9 @@ public class PlayerControllerCamera : MonoBehaviour
     }
 
     // Show death cam via adding prefab of cinemachine Camera
-    internal void SetDeathCam()
+    internal void SetDeathCam(float camDist)
     {
-        deathCamCinemachine = GameManager.instance.InstanciateDeathCam(transform.position);
+        deathCamCinemachine = GameManager.instance.InstanciateDeathCam(transform.position, camDist);
         deathCamCinemachine.GetComponent<CinemachineCamera>().LookAt = gameObject.transform;
         Debug.Log(deathCamCinemachine + " has been spawned");
     }
