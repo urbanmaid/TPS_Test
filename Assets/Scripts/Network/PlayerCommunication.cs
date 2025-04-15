@@ -8,14 +8,24 @@ public class PlayerCommunication : NetworkBehaviour
 
     public override void Spawned() // Call when the NetworkObject has been spawned
     {
-        if (userName == "") 
-            userName = "Player_" + Random.Range(1000, 9999);
-        RPC_SendMessage("접속 완료! 난 " + userName + "이야!");
+        RPC_SendMessage("New Player Has been spawned.");
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     internal void RPC_SendMessage(string message)
     {
-        Debug.Log("메시지 받았어: " + message);
+        Debug.Log(message);
+    }
+
+    internal void SetUserName(string userNameInput)
+    {
+        if (userNameInput == "") {
+            userName = "Player_" + Random.Range(1000, 9999);
+        }
+        else
+        {
+            userName = userNameInput;
+        }
+        RPC_SendMessage(userName + " has reached into Session");
     }
 }

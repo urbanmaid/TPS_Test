@@ -56,6 +56,9 @@ public class PlayerControllerManeuver : MonoBehaviour
     {
         SetInitialComponenet();
         SetInitialInputAction();
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void SetInitialComponenet()

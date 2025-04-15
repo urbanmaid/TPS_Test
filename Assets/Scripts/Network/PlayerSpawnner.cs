@@ -9,16 +9,15 @@ public class PlayerSpawner : MonoBehaviour
     void Start()
     {
         Instance = this;
-
     }
 
-    public void SetRunnerAndInit()
+    public void SetRunnerAndInit(string connectedUserName)
     {
         // NetworkRunner가 준비되면 플레이어 스폰
         var runner = FindAnyObjectByType<NetworkRunner>();
         if (runner != null && runner.IsRunning)
         {
-            SpawnPlayer(runner);
+            SpawnPlayer(runner, connectedUserName);
         }
         else if(runner == null)
         {
@@ -26,9 +25,9 @@ public class PlayerSpawner : MonoBehaviour
         }
     }
 
-    public void SpawnPlayer(NetworkRunner runner)
+    public void SpawnPlayer(NetworkRunner runner, string userName)
     {
-        Debug.Log($"Runner 상태: IsRunning={runner.IsRunning}, IsServer={runner.IsServer}, IsClient={runner.IsClient}");
+        //Debug.Log($"Runner 상태: IsRunning={runner.IsRunning}, IsServer={runner.IsServer}, IsClient={runner.IsClient}");
 
         // 서버 또는 호스트일 때만 스폰
         if (runner.IsServer || runner.IsSharedModeMasterClient)
@@ -40,6 +39,7 @@ public class PlayerSpawner : MonoBehaviour
             PlayerCommunication comm = player.GetComponent<PlayerCommunication>();
             if (comm != null)
             {
+                comm.SetUserName(userName);
                 comm.RPC_SendMessage($"호스트: 새로운 플레이어({comm.userName})가 접속했어!");
             }
         }

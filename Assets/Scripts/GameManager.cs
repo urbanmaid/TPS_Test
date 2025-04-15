@@ -14,8 +14,7 @@ public class GameManager : MonoBehaviour
     {
         instance = this;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        DontDestroyOnLoad(gameObject);
     }
 
     // Update is called once per frame
@@ -33,5 +32,4 @@ public class GameManager : MonoBehaviour
         randomPosition.y = 0; // y축을 고정 (필요에 따라 조정)
         return Instantiate(deathCamObject, installPos + (Vector3.up * 2.25f) + (randomPosition.normalized * distOfCamera), Quaternion.identity);
     }
-
 }
