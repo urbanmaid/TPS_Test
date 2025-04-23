@@ -32,6 +32,7 @@ public class PlayerSpawner : MonoBehaviour
         // 서버 또는 호스트일 때만 스폰
         if (runner.IsServer || runner.IsSharedModeMasterClient)
         {
+            /*
             NetworkObject player = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, PlayerRef.None);
             Debug.Log("플레이어 스폰 완료! 서버/호스트에서 처리했어~!");
 
@@ -41,6 +42,24 @@ public class PlayerSpawner : MonoBehaviour
             {
                 comm.SetUserName(userName);
                 comm.RPC_SendMessage($"호스트: 새로운 플레이어({comm.userName})가 접속했어!");
+            }
+            */
+
+            foreach (var player in runner.ActivePlayers)
+            {
+                NetworkObject playerObject = runner.Spawn(
+                    playerPrefab,
+                    Vector3.zero,
+                    Quaternion.identity,
+                    player // 각 플레이어의 PlayerRef를 전달
+                );
+
+                PlayerCommunication comm = playerObject.GetComponent<PlayerCommunication>();
+                if (comm != null)
+                {
+                    comm.SetUserName(userName);
+                    comm.RPC_SendMessage($"호스트: 새로운 플레이어({comm.userName})가 접속했어!");
+                }
             }
         }
         else

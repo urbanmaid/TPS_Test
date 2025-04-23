@@ -20,10 +20,12 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        /*
         foreach(PlayerControllerManeuver playerControllerManeuver in playerControllerManeuvers)
         {
             playerControllerManeuver.UpdateMe();
         }
+        */
     }
 
     internal GameObject InstanciateDeathCam(Vector3 installPos, float distOfCamera)

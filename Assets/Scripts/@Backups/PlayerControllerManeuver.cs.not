@@ -1,10 +1,9 @@
 using System;
 using System.Collections;
-using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerControllerManeuver : NetworkBehaviour
+public class PlayerControllerManeuver : MonoBehaviour
 {
     #region Variables
 
@@ -53,30 +52,13 @@ public class PlayerControllerManeuver : NetworkBehaviour
     #endregion
     #region Initialization
 
-    public override void Spawned()
+    void Start()
     {
-        // 로컬 플레이어만 입력 활성화
-        if (Object.HasInputAuthority)
-        {
-            SetInitialInputAction();
-            SetInitialComponenet();
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-        else
-        {
-            // 다른 플레이어는 카메라 비활성화
-            //if (playerCameraCoor != null) playerCameraCoor.SetActive(false);
-            Debug.LogError("Problem has occured. Currently has no access for input due to property Object.HasInputAuthority.");
-        }
-    }
+        SetInitialComponenet();
+        SetInitialInputAction();
 
-    internal void Respawn()
-    {
-        transform.position = initPos;
-        maneuverStatus = 1;
-
-        Debug.Log("Respawned");
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void SetInitialComponenet()
@@ -87,7 +69,6 @@ public class PlayerControllerManeuver : NetworkBehaviour
         {
             Debug.LogError("There are no Rigidbodies on player");
         }
-        //rb.isKinematic = true;
 
         // Get other non-rb components
         playerWeaponManager = GetComponent<PlayerControllerWeapon>();
@@ -101,7 +82,6 @@ public class PlayerControllerManeuver : NetworkBehaviour
         // Variables
         jumpAmountCur = jumpAmount;
         initPos = transform.position;
-        maneuverStatus = 1;
     }
 
     void SetInitialInputAction()
@@ -131,33 +111,21 @@ public class PlayerControllerManeuver : NetworkBehaviour
         inputActions.Player.Enable();
     }
 
-    public override void FixedUpdateNetwork()
+    internal void Respawn()
     {
-        if (Object.HasInputAuthority)
-        {
-            // 로컬 플레이어만 입력 처리
-            Move();
-            SetDirection();
-        }
+        transform.position = initPos;
+        maneuverStatus = 1;
 
-        // 모든 클라이언트에서 애니메이션 및 카메라 업데이트
-        UpdateMe();
+        Debug.Log("Respawned");
     }
 
-    private void UpdateMe()
+    public void UpdateMe()
     {
-        // 네트워크 변수로 애니메이션 업데이트
-        playerControllerAnimation?.SetDirection(lookDirectionX);
+        Move();
+        SetDirection();
 
-        // 로컬 플레이어의 카메라 회전
-        if (Object.HasInputAuthority && playerCameraCoor != null)
-        {
-            playerCameraCoor.transform.rotation = Quaternion.Euler(
-                lookDirectionY,
-                lookDirectionX,
-                0f
-            );
-        }
+        // External Action
+        playerControllerAnimation.SetDirection(lookDirectionX);
     }
 
     #endregion
@@ -179,25 +147,10 @@ public class PlayerControllerManeuver : NetworkBehaviour
                 moveInput.y * (float)Math.Cos(lookDirectionX * invRadian) - moveInput.x * (float)Math.Sin(lookDirectionX * invRadian)
                 ).normalized
                  * (isAiming? moveSpeedWhenAim: moveSpeed);
-
-            if (moveInput == Vector2.zero)
-            {
-                moveDirection = Vector3.zero;
-            }
             moveDirectionLerp = Vector3.Lerp(moveDirectionLerp, moveDirection, Time.deltaTime * lerpDelay);
 
-            if (Object.HasStateAuthority)
-            {
-                // 입력이 없으면 속도 0으로 설정
-                if (moveDirectionLerp.magnitude < 0.01f) // 작은 값은 0으로 간주
-                {
-                    rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
-                }
-                else
-                {
-                    rb.linearVelocity = new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z);
-                }
-            }
+            //rotate the coordinate of movDirection as new Vector3(0f, lookDirection, 0f)
+            rb.linearVelocity = new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z);
         }
     }
 
@@ -229,8 +182,6 @@ public class PlayerControllerManeuver : NetworkBehaviour
             maneuverStatus = 3;
             rb.AddForce(Vector3.up * jumpPower + new Vector3(moveDirection.x, 0, moveDirection.z).normalized * (jumpPower / 2), ForceMode.VelocityChange);
             //Debug.Log("Jumping Now");
-
-            //RPC_NotifyStateChange(ManeuverStatus, IsAiming);
         }
     }
 
@@ -250,11 +201,9 @@ public class PlayerControllerManeuver : NetworkBehaviour
             maneuverStatus = 2;
             slideAmountCur = 0;
             rb.AddForce(new Vector3(moveDirection.x, 0, moveDirection.z).normalized * slidePower, ForceMode.VelocityChange);
-            //RPC_NotifyStateChange(ManeuverStatus, IsAiming);
-
+            
             yield return new WaitForSeconds(slideDelay);
             maneuverStatus = 1;
-            //RPC_NotifyStateChange(ManeuverStatus, IsAiming);
 
             yield return new WaitForSeconds(slideDelay * 0.4f);
             slideAmountCur = 1;
