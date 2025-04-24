@@ -1,0 +1,291 @@
+using System;
+using System.Collections;
+using Fusion;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class PlayerControllerManeuver : NetworkBehaviour
+{
+    #region Variables
+
+    [SerializeField] PlayerControllerWeapon playerWeaponManager;
+    internal PlayerControllerCamera playerControllerCamera;
+    [SerializeField] PlayerControllerStatus playerControllerStatus;
+    PlayerControllerAnimation playerControllerAnimation;
+    InputSystem_Actions inputActions;
+    Rigidbody rb;
+    Vector3 initPos;
+
+    [Header("Camera")]
+    [SerializeField] GameObject playerCameraCoor;
+
+    [Header("Maneuver")]
+    [Tooltip("0 for death, 1 for alive, 2 for immovilized. 3 for jumping")]
+    public int maneuverStatus = 1; // Sets player movement
+    public bool isAiming = false; // Sets player aim pose
+    [Space]
+    [SerializeField] float lerpDelay = 8f;
+    [SerializeField] float moveSpeed = 8f;
+    [SerializeField] float moveSpeedWhenAim = 2.25f;
+    private Vector2 moveInput;
+    private Vector3 moveDirection;
+    private Vector3 moveDirectionLerp;
+
+    [Space]
+    [Tooltip("lookInput defines Input of camera direction, X for Horizontal, Y for vertical.")]
+    private Vector2 lookInput; //Input of camera direction, X for input
+    [SerializeField] float lookSensitivity = 2f;
+    public float lookDirectionX;
+    [SerializeField] float lookDirectionY;
+
+    [Space]
+    [SerializeField] int jumpAmount = 1;
+    private int jumpAmountCur;
+    [SerializeField] float jumpPower = 8f;
+    [SerializeField] float slidePower = 2.75f;
+    private int slideAmountCur = 1;
+    private float slideDelay = 1.05f;
+    private readonly double invRadian = (Math.PI / 180.0);
+
+    //[Header("Animation Connection")]
+    public event Action<int, bool> OnManeuverStateChanged;
+
+    #endregion
+    #region Initialization
+
+    public override void Spawned()
+    {
+        // 로컬 플레이어만 입력 활성화
+        if (Object.HasInputAuthority)
+        {
+            SetInitialInputAction();
+            SetInitialComponenet();
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            // 다른 플레이어는 카메라 비활성화
+            //if (playerCameraCoor != null) playerCameraCoor.SetActive(false);
+            Debug.LogError("Problem has occured. Currently has no access for input due to property Object.HasInputAuthority.");
+        }
+    }
+
+    internal void Respawn()
+    {
+        transform.position = initPos;
+        maneuverStatus = 1;
+
+        Debug.Log("Respawned");
+    }
+
+    void SetInitialComponenet()
+    {
+        // Components
+        rb = GetComponent<Rigidbody>();
+        if(rb == null)
+        {
+            Debug.LogError("There are no Rigidbodies on player");
+        }
+        //rb.isKinematic = true;
+
+        // Get other non-rb components
+        playerWeaponManager = GetComponent<PlayerControllerWeapon>();
+        playerControllerCamera = GetComponent<PlayerControllerCamera>();
+        playerControllerCamera.InitializeMe(this);
+        playerControllerStatus = GetComponent<PlayerControllerStatus>();
+        playerControllerStatus.InitializeMe(this);
+        playerControllerAnimation = GetComponent<PlayerControllerAnimation>();
+        playerControllerAnimation.InitializeMe(this);
+
+        // Variables
+        jumpAmountCur = jumpAmount;
+        initPos = transform.position;
+        maneuverStatus = 1;
+    }
+
+    void SetInitialInputAction()
+    {
+        inputActions = new InputSystem_Actions();
+        if(inputActions != null)
+        {
+            Debug.Log("inputActions has been loaded");
+        }
+
+        // Move
+        inputActions.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
+        inputActions.Player.Move.canceled += ctx => moveInput = Vector2.zero;
+
+        // Look
+        inputActions.Player.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
+        inputActions.Player.Look.canceled += ctx => lookInput = Vector2.zero;
+
+        // Jump
+        inputActions.Player.Jump.performed += ctx => Jump();
+        inputActions.Player.Slide.performed += ctx => Slide();
+
+        // Swap cam
+        inputActions.Player.Aim.performed += ctx => SetAim();
+        inputActions.Player.Aim.canceled += ctx => ResetAim();
+
+        inputActions.Player.Enable();
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (Object.HasInputAuthority)
+        {
+            // 로컬 플레이어만 입력 처리
+            Move();
+            SetDirection();
+        }
+
+        // 모든 클라이언트에서 애니메이션 및 카메라 업데이트
+        UpdateMe();
+    }
+
+    private void UpdateMe()
+    {
+        // 네트워크 변수로 애니메이션 업데이트
+        playerControllerAnimation?.SetDirection(lookDirectionX);
+
+        // 로컬 플레이어의 카메라 회전
+        if (Object.HasInputAuthority && playerCameraCoor != null)
+        {
+            playerCameraCoor.transform.rotation = Quaternion.Euler(
+                lookDirectionY,
+                lookDirectionX,
+                0f
+            );
+        }
+    }
+
+    #endregion
+    #region Maneuver
+    
+    void Move()
+    {
+        if(maneuverStatus == 1)
+        {
+            /*
+            X - moveInput.x * sin(lookDirection) + ??
+            Y - 0
+            Z - moveInput.y * cos(lookDirection) + ??
+            whole math function is operated by radian so converted as invRadian
+            */
+            moveDirection = new Vector3(
+                moveInput.x * (float)Math.Cos(lookDirectionX * invRadian) + moveInput.y * (float)Math.Sin(lookDirectionX * invRadian), 
+                0f, 
+                moveInput.y * (float)Math.Cos(lookDirectionX * invRadian) - moveInput.x * (float)Math.Sin(lookDirectionX * invRadian)
+                ).normalized
+                 * (isAiming? moveSpeedWhenAim: moveSpeed);
+
+            if (moveInput == Vector2.zero)
+            {
+                moveDirection = Vector3.zero;
+            }
+            moveDirectionLerp = Vector3.Lerp(moveDirectionLerp, moveDirection, Time.deltaTime * lerpDelay);
+
+            if (Object.HasStateAuthority)
+            {
+                // 입력이 없으면 속도 0으로 설정
+                if (moveDirectionLerp.magnitude < 0.01f) // 작은 값은 0으로 간주
+                {
+                    rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+                }
+                else
+                {
+                    rb.linearVelocity = new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z);
+                }
+            }
+        }
+    }
+
+    void SetDirection()
+    {
+        // Set value of Rotate Direction X
+        lookDirectionX += lookInput.x * lookSensitivity * Time.deltaTime;
+        if (lookDirectionX > 180f) lookDirectionX = -180f;
+        if (lookDirectionX < -180f) lookDirectionX = 180f;
+
+        // Set value of Rotate Direction Y
+        lookDirectionY -= lookInput.y * lookSensitivity * Time.deltaTime;
+        lookDirectionY = Mathf.Clamp(lookDirectionY, -80f, 80f);
+        
+        // Set Camera Direction
+        playerCameraCoor.transform.rotation = Quaternion.Euler(
+            lookDirectionY, 
+            lookDirectionX, 0f
+        );
+    }
+
+    #endregion
+    #region Additional Action
+    private void Jump()
+    {
+        if(jumpAmountCur > 0)
+        {
+            jumpAmountCur--;
+            maneuverStatus = 3;
+            rb.AddForce(Vector3.up * jumpPower + new Vector3(moveDirection.x, 0, moveDirection.z).normalized * (jumpPower / 2), ForceMode.VelocityChange);
+            //Debug.Log("Jumping Now");
+
+            //RPC_NotifyStateChange(ManeuverStatus, IsAiming);
+        }
+    }
+
+    private void Slide()
+    {
+        if(!isAiming)
+        {
+            StartCoroutine(SlideCo());
+        }
+    }
+
+    // Coroutine of Slide
+    IEnumerator SlideCo()
+    {
+        if(slideAmountCur > 0)
+        {
+            maneuverStatus = 2;
+            slideAmountCur = 0;
+            rb.AddForce(new Vector3(moveDirection.x, 0, moveDirection.z).normalized * slidePower, ForceMode.VelocityChange);
+            //RPC_NotifyStateChange(ManeuverStatus, IsAiming);
+
+            yield return new WaitForSeconds(slideDelay);
+            maneuverStatus = 1;
+            //RPC_NotifyStateChange(ManeuverStatus, IsAiming);
+
+            yield return new WaitForSeconds(slideDelay * 0.4f);
+            slideAmountCur = 1;
+        }
+    }
+
+    void SetAim()
+    {
+        if(maneuverStatus == 1)
+        {
+            isAiming = true;
+            if(playerControllerCamera) playerControllerCamera.SetAim();
+        }
+    }
+
+    void ResetAim()
+    {
+        isAiming = false;
+        if(playerControllerCamera) playerControllerCamera.ResetAim();
+    }
+
+    private void NotifyStateChange()
+    {
+        OnManeuverStateChanged?.Invoke(maneuverStatus, isAiming);
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        maneuverStatus = 1;
+        jumpAmountCur = jumpAmount;
+        //Debug.Log("Landed");
+    }
+    #endregion
+}

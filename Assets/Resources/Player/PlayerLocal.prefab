@@ -11,15 +11,14 @@ GameObject:
   - component: {fileID: 7461515098927929126}
   - component: {fileID: 3338821342831544924}
   - component: {fileID: 5330630735932842839}
+  - component: {fileID: 7793840184077079030}
   - component: {fileID: 6185780898651872121}
   - component: {fileID: 4236684646130676456}
   - component: {fileID: 738643448246514479}
   - component: {fileID: 1953001811257010805}
   - component: {fileID: 5648262517803779197}
-  - component: {fileID: 4876762736447049564}
-  - component: {fileID: 6448842297748199088}
   m_Layer: 0
-  m_Name: Player
+  m_Name: PlayerLocal
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50,7 +49,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2495595129340217452}
   serializedVersion: 4
-  m_Mass: 50
+  m_Mass: 60
   m_Drag: 2
   m_AngularDrag: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -92,6 +91,22 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &7793840184077079030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2495595129340217452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b02565cf2590d4e875a924c7b96a8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerControllerManeuver: {fileID: 0}
+  playerWeaponManager: {fileID: 1953001811257010805}
+  playerControllerStatus: {fileID: 738643448246514479}
+  playerCameraCoor: {fileID: 7129892783885431216}
 --- !u!114 &6185780898651872121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104,10 +119,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c8d540a47c5d0e4dacc37616d1c2300, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lerpDelay: 16
+  lerpDelay: 12
   moveSpeed: 9
   moveSpeedWhenAim: 2.5
-  lookSensitivity: 80
+  lookSensitivity: 25
   jumpAmount: 1
   jumpPower: 8
   slidePower: 12
@@ -168,48 +183,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerAvatar: {fileID: 3976868610134791148}
   animator: {fileID: 0}
---- !u!114 &4876762736447049564
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2495595129340217452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 3232215586
-  ObjectInterest: 1
-  Flags: 262145
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 6448842297748199088}
-  ForceRemoteRenderTimeframe: 0
---- !u!114 &6448842297748199088
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2495595129340217452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a591d221a634417e9827eb58e17de84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 1
-  _interpolationTarget: {fileID: 0}
-  UsePreciseRotation: 0
-  UseRenderSleepThresholds: 1
-  RenderThresholds:
-    UseEnergy: 1
-    Position: 0.01
-    Rotation: 0.01
-    Scale: 0.01
 --- !u!1 &7129892783885431216
 GameObject:
   m_ObjectHideFlags: 0
