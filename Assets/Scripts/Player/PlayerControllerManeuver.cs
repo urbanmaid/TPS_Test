@@ -8,9 +8,9 @@ public class PlayerControllerManeuver : MonoBehaviour
     private Rigidbody rb;
 
     [Header("General")]
-    [SerializeField] private float lerpDelay = 8f;
-    private float lerpDelayOnAim;
-    private float lerpDelayOnAimMax = 56.25f;
+    private float lerpDelayMin = 10f;
+    [SerializeField] private float lerpDelay;
+    private float lerpDelayMax = 56.25f;
 
     [Header("Move")]
     [SerializeField] private float moveSpeed = 8f;
@@ -37,7 +37,7 @@ public class PlayerControllerManeuver : MonoBehaviour
         this.controller = controller;
         rb = GetComponent<Rigidbody>();
 
-        lerpDelayOnAim = lerpDelay;
+        lerpDelay = lerpDelayMin;
         jumpAmountCur = jumpAmount;
     }
 
@@ -55,7 +55,7 @@ public class PlayerControllerManeuver : MonoBehaviour
             {
                 moveDirection = Vector3.zero;
             }
-            moveDirectionLerp = Vector3.Lerp(moveDirectionLerp, moveDirection, Time.deltaTime * lerpDelay);
+            moveDirectionLerp = Vector3.Lerp(moveDirectionLerp, moveDirection, Time.deltaTime * lerpDelayMin);
 
             if (controller.CanMove)
             {
@@ -102,14 +102,14 @@ public class PlayerControllerManeuver : MonoBehaviour
                 0,
                 controller.MoveInput.y
             )).eulerAngles.y : 0) + controller.LookDirectionX,
-            lerpDelayOnAim * Time.deltaTime);
+            lerpDelay * Time.deltaTime);
         }
 
         if(controller.IsAiming)
         {
             controller.LookDirectionAvatarX = Mathf.LerpAngle(controller.LookDirectionAvatarX, 
             controller.LookDirectionX,
-            lerpDelayOnAim * Time.deltaTime);
+            lerpDelay * Time.deltaTime);
         }
 
     }
@@ -184,15 +184,15 @@ public class PlayerControllerManeuver : MonoBehaviour
     // True for Arm, False for Disarm
     private IEnumerator SetLerpDelayAim(bool value)
     {
-        float valStart = value ? lerpDelayOnAimMax : lerpDelay;
-        float valFinish = value ? lerpDelayOnAimMax : lerpDelay;
+        float valStart = value ? lerpDelayMin : lerpDelayMax;
+        float valFinish = value ? lerpDelayMax : lerpDelayMin;
         float valCursor = 0;
 
         while(valCursor < 1)
         {
-            valCursor += Time.deltaTime;
-            lerpDelayOnAim = Mathf.Lerp(valStart, valFinish, valCursor);
-            yield return null;
+            valCursor += Time.deltaTime / 0.25f;
+            lerpDelay = Mathf.Lerp(valStart, valFinish, valCursor);
+            yield return new WaitForEndOfFrame();
         }
     }
 
