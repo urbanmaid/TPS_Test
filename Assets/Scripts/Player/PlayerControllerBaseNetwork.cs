@@ -6,6 +6,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
 {
     [Networked] public int ManeuverStatus { get; set; }
     [Networked] public NetworkBool IsAiming { get; set; }
+    [Networked] public NetworkBool IsCrouching { get; set; }
     [Networked] public float LookDirectionX { get; set; }
     [Networked] public float LookDirectionAvatarX { get; set; }
     [Networked] public float LookDirectionY { get; set; }
@@ -29,6 +30,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
 
     public int maneuverStatus { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
     bool IPlayerController.IsAiming { get => IsAiming; set => IsAiming = value; }
+    bool IPlayerController.IsCrouching { get => IsCrouching; set => IsCrouching = value; }
 
     private PlayerControllerManeuver maneuver;
 
@@ -143,6 +145,14 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
         {
             maneuver.Slide(IsAiming);
             RPC_NotifyStateChange(ManeuverStatus, IsAiming);
+        }
+    }
+
+    public void Crouch(bool value)
+    {
+        if (Object.HasStateAuthority)
+        {
+            maneuver.Crouch(value);
         }
     }
 

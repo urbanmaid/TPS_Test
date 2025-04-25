@@ -15,6 +15,7 @@ public class PlayerControllerManeuver : MonoBehaviour
     [Header("Move")]
     [SerializeField] private float moveSpeed = 8f;
     [SerializeField] private float moveSpeedWhenAim = 2.25f;
+    [SerializeField] private float moveSpeedWhenCrouch = 2f;
     private Vector3 moveDirection;
     private Vector3 moveDirectionLerp;
 
@@ -49,7 +50,7 @@ public class PlayerControllerManeuver : MonoBehaviour
                 moveInput.x * (float)Math.Cos(controller.LookDirectionX * invRadian) + moveInput.y * (float)Math.Sin(controller.LookDirectionX * invRadian),
                 0f,
                 moveInput.y * (float)Math.Cos(controller.LookDirectionX * invRadian) - moveInput.x * (float)Math.Sin(controller.LookDirectionX * invRadian)
-            ).normalized * (isAiming ? moveSpeedWhenAim : moveSpeed);
+            ).normalized * (isAiming ? moveSpeedWhenAim : (controller.IsCrouching ? moveSpeedWhenCrouch : moveSpeed));
 
             if (moveInput == Vector2.zero)
             {
@@ -116,7 +117,7 @@ public class PlayerControllerManeuver : MonoBehaviour
 
     public void Jump()
     {
-        if (jumpAmountCur > 0)
+        if (jumpAmountCur > 0 && slideAmountCur > 0)
         {
             jumpAmountCur--;
             controller.ManeuverStatus = 3;
@@ -141,11 +142,17 @@ public class PlayerControllerManeuver : MonoBehaviour
 
     private IEnumerator SlideCo()
     {
-        if (slideAmountCur > 0)
+        if (slideAmountCur > 0 && jumpAmountCur > 0 )
         {
             controller.ManeuverStatus = 2;
             slideAmountCur = 0;
-            rb.AddForce(1.25f * slidePower * new Vector3(moveDirection.x, 0, moveDirection.z).normalized, ForceMode.VelocityChange);
+
+            // Set Slide Direction which player avatar is heading
+            rb.AddForce(1.25f * slidePower * new Vector3(
+                (float)Math.Sin(controller.LookDirectionAvatarX * invRadian), 
+                0, 
+                (float)Math.Cos(controller.LookDirectionAvatarX * invRadian)
+            ).normalized, ForceMode.VelocityChange);
             controller.NotifyStateChange();
 
             yield return new WaitForSeconds(slideDelay);
@@ -155,6 +162,11 @@ public class PlayerControllerManeuver : MonoBehaviour
             yield return new WaitForSeconds(slideDelay * 0.4f);
             slideAmountCur = 1;
         }
+    }
+
+    public void Crouch(bool value)
+    {
+        controller.IsCrouching = value;
     }
 
     public void SetAim(int maneuverStatus)
@@ -186,7 +198,7 @@ public class PlayerControllerManeuver : MonoBehaviour
     {
         float valStart = value ? lerpDelayMin : lerpDelayMax;
         float valFinish = value ? lerpDelayMax : lerpDelayMin;
-        float valReachingDuration = value ? 0.25f : 0.6f;
+        float valReachingDuration = value ? 0.25f : 0.1f;
         float valCursor = 0;
 
         while(valCursor < 1)

@@ -48,6 +48,11 @@ public class PlayerControllerBaseLocal : PlayerControllerBase
         playerControllerManeuver.Slide(IsAiming);
     }
 
+    public override void Crouch(bool value)
+    {
+        playerControllerManeuver.Crouch(value);
+    }
+
     public override void SetAim()
     {
         playerControllerManeuver.SetAim(ManeuverStatus);

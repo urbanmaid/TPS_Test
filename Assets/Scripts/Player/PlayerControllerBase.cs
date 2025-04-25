@@ -19,6 +19,7 @@ public abstract class PlayerControllerBase : MonoBehaviour, IPlayerController
     [Header("Maneuver")]
     public int ManeuverStatus { get; set; } = 1;
     public bool IsAiming { get; set; }
+    public bool IsCrouching { get; set; }
     protected Vector2 moveInput;
     protected Vector2 lookInput;
     public float LookDirectionX { get; set; }
@@ -30,7 +31,6 @@ public abstract class PlayerControllerBase : MonoBehaviour, IPlayerController
     public Vector2 MoveInput => moveInput;
     public Vector2 LookInput => lookInput;
     public abstract bool CanMove { get; }
-    public int maneuverStatus { get; set; }
 
     protected virtual void Awake()
     {
@@ -77,6 +77,9 @@ public abstract class PlayerControllerBase : MonoBehaviour, IPlayerController
 
         inputActions.Player.Jump.performed += ctx => Jump();
         inputActions.Player.Slide.performed += ctx => Slide();
+        inputActions.Player.Crouch.performed += ctx => Crouch(true);
+        inputActions.Player.Crouch.canceled += ctx => Crouch(false);
+
         inputActions.Player.Aim.performed += ctx => SetAim();
         inputActions.Player.Aim.canceled += ctx => ResetAim();
 
@@ -92,6 +95,7 @@ public abstract class PlayerControllerBase : MonoBehaviour, IPlayerController
     public abstract void SetDirection();
     public abstract void Jump();
     public abstract void Slide();
+    public abstract void Crouch(bool value);
     public abstract void SetAim();
     public abstract void ResetAim();
     public abstract void UpdateMe();
@@ -99,9 +103,9 @@ public abstract class PlayerControllerBase : MonoBehaviour, IPlayerController
 
 public interface IPlayerController
 {
-    int maneuverStatus { get; set; }
     int ManeuverStatus { get; set; }
     bool IsAiming { get; set; }
+    bool IsCrouching { get; set; }
     float LookDirectionX { get; set; }
     float LookDirectionAvatarX { get; set; }
     float LookDirectionY { get; set; }
