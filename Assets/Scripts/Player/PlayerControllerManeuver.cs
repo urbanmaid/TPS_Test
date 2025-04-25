@@ -186,11 +186,12 @@ public class PlayerControllerManeuver : MonoBehaviour
     {
         float valStart = value ? lerpDelayMin : lerpDelayMax;
         float valFinish = value ? lerpDelayMax : lerpDelayMin;
+        float valReachingDuration = value ? 0.25f : 0.6f;
         float valCursor = 0;
 
         while(valCursor < 1)
         {
-            valCursor += Time.deltaTime / 0.25f;
+            valCursor += Time.deltaTime / valReachingDuration;
             lerpDelay = Mathf.Lerp(valStart, valFinish, valCursor);
             yield return new WaitForEndOfFrame();
         }
