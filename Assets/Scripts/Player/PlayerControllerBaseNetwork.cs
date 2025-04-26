@@ -100,7 +100,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
         inputActions.Player.Enable();
     }
 
-    public override void FixedUpdateNetwork()
+    public override void Render()
     {
         if (Object.HasInputAuthority)
         {

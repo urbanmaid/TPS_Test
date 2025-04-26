@@ -68,6 +68,7 @@ public class PlayerControllerManeuver : MonoBehaviour
                 {
                     rb.linearVelocity = new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z);
                 }
+                //transform.Translate(new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z) * Time.deltaTime);
             }
         }
     }

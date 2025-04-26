@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 1953001811257010805}
   - component: {fileID: 5648262517803779197}
   - component: {fileID: 4876762736447049564}
-  - component: {fileID: 6448842297748199088}
+  - component: {fileID: 2925846510182067217}
   m_Layer: 0
   m_Name: PlayerOnline
   m_TagString: Player
@@ -39,7 +39,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4358213690068830550}
+  - {fileID: 1547304968934749181}
   - {fileID: 3557688962348675133}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -212,9 +212,9 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 8563298056498675390}
-  - {fileID: 6448842297748199088}
+  - {fileID: 2925846510182067217}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &6448842297748199088
+--- !u!114 &2925846510182067217
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -237,6 +237,38 @@ MonoBehaviour:
     Position: 0.01
     Rotation: 0.01
     Scale: 0.01
+--- !u!1 &6659787594761494029
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1547304968934749181}
+  m_Layer: 0
+  m_Name: InterpolationTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1547304968934749181
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6659787594761494029}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4358213690068830550}
+  m_Father: {fileID: 7461515098927929126}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7129892783885431216
 GameObject:
   m_ObjectHideFlags: 0
@@ -502,7 +534,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 7461515098927929126}
+    m_TransformParent: {fileID: 1547304968934749181}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 78ea0cec9dd901a42aec39585ba08fdb, type: 3}
       propertyPath: m_LocalPosition.x

@@ -5,6 +5,7 @@ public class PlayerSpawner : MonoBehaviour
 {
     public static PlayerSpawner Instance;
     [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private GameObject playerPrefabOnLocal;
 
     void Start()
     {
@@ -66,5 +67,10 @@ public class PlayerSpawner : MonoBehaviour
         {
             Debug.Log("클라이언트는 스폰 안 해! 서버가 할 거야~");
         }
+    }
+
+    public void SpawnPlayerAsLocal()
+    {
+        Instantiate(playerPrefabOnLocal, transform.position, Quaternion.identity);
     }
 }
