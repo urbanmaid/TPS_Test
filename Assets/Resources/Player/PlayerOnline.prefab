@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7461515098927929126}
   - component: {fileID: 3338821342831544924}
   - component: {fileID: 5330630735932842839}
+  - component: {fileID: 8563298056498675390}
   - component: {fileID: 6185780898651872121}
   - component: {fileID: 4236684646130676456}
   - component: {fileID: 738643448246514479}
@@ -19,7 +20,7 @@ GameObject:
   - component: {fileID: 4876762736447049564}
   - component: {fileID: 6448842297748199088}
   m_Layer: 0
-  m_Name: Player
+  m_Name: PlayerOnline
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92,6 +93,30 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &8563298056498675390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2495595129340217452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3898f0019a8d1d242a17302a7906d86f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ManeuverStatus: 0
+  _IsAiming:
+    _value: 0
+  _IsCrouching:
+    _value: 0
+  _LookDirectionX: 0
+  _LookDirectionAvatarX: 0
+  _LookDirectionY: 0
+  playerControllerManeuver: {fileID: 0}
+  playerWeaponManager: {fileID: 0}
+  playerControllerStatus: {fileID: 0}
+  playerCameraCoor: {fileID: 7129892783885431216}
 --- !u!114 &6185780898651872121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -107,6 +132,7 @@ MonoBehaviour:
   lerpDelay: 16
   moveSpeed: 9
   moveSpeedWhenAim: 2.5
+  moveSpeedWhenCrouch: 3
   lookSensitivity: 80
   jumpAmount: 1
   jumpPower: 8
@@ -185,6 +211,7 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 8563298056498675390}
   - {fileID: 6448842297748199088}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &6448842297748199088

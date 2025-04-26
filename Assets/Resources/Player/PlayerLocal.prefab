@@ -122,10 +122,11 @@ MonoBehaviour:
   lerpDelay: 12
   moveSpeed: 9
   moveSpeedWhenAim: 2.5
+  moveSpeedWhenCrouch: 2
   lookSensitivity: 25
   jumpAmount: 1
   jumpPower: 8
-  slidePower: 12
+  slidePower: 15
 --- !u!114 &4236684646130676456
 MonoBehaviour:
   m_ObjectHideFlags: 0

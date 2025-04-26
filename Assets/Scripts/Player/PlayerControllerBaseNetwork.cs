@@ -28,17 +28,17 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
     public Vector2 MoveInput => moveInput;
     public Vector2 LookInput => lookInput;
 
-    public int maneuverStatus { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    //public int maneuverStatus { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
     bool IPlayerController.IsAiming { get => IsAiming; set => IsAiming = value; }
     bool IPlayerController.IsCrouching { get => IsCrouching; set => IsCrouching = value; }
 
-    private PlayerControllerManeuver maneuver;
+    //private PlayerControllerManeuver playerControllerManeuver;
 
     public override void Spawned()
     {
         SetInitialComponent();
-        maneuver = gameObject.AddComponent<PlayerControllerManeuver>();
-        maneuver.InitializeMe(this);
+        //playerControllerManeuver = gameObject.AddComponent<PlayerControllerManeuver>();
+        //playerControllerManeuver.InitializeMe(this);
 
         if (Object.HasInputAuthority)
         {
@@ -122,19 +122,19 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
 
     public void Move()
     {
-        maneuver.Move(MoveInput, IsAiming);
+        playerControllerManeuver.Move(MoveInput, IsAiming);
     }
 
     public void SetDirection()
     {
-        maneuver.SetDirection(LookInput);
+        playerControllerManeuver.SetDirection(LookInput);
     }
 
     public void Jump()
     {
         if (Object.HasStateAuthority)
         {
-            maneuver.Jump();
+            playerControllerManeuver.Jump();
             RPC_NotifyStateChange(ManeuverStatus, IsAiming);
         }
     }
@@ -143,7 +143,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
     {
         if (Object.HasStateAuthority)
         {
-            maneuver.Slide(IsAiming);
+            playerControllerManeuver.Slide(IsAiming);
             RPC_NotifyStateChange(ManeuverStatus, IsAiming);
         }
     }
@@ -152,7 +152,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
     {
         if (Object.HasStateAuthority)
         {
-            maneuver.Crouch(value);
+            playerControllerManeuver.Crouch(value);
         }
     }
 
@@ -160,7 +160,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
     {
         if (Object.HasStateAuthority)
         {
-            maneuver.SetAim(ManeuverStatus);
+            playerControllerManeuver.SetAim(ManeuverStatus);
             RPC_NotifyStateChange(ManeuverStatus, IsAiming);
         }
     }
@@ -169,7 +169,7 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
     {
         if (Object.HasStateAuthority)
         {
-            maneuver.ResetAim();
+            playerControllerManeuver.ResetAim();
             RPC_NotifyStateChange(ManeuverStatus, IsAiming);
         }
     }

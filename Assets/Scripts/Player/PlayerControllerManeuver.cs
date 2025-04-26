@@ -14,8 +14,8 @@ public class PlayerControllerManeuver : MonoBehaviour
 
     [Header("Move")]
     [SerializeField] private float moveSpeed = 8f;
-    [SerializeField] private float moveSpeedWhenAim = 2.25f;
-    [SerializeField] private float moveSpeedWhenCrouch = 2f;
+    [SerializeField] private float moveSpeedWhenAim = 2.5f;
+    [SerializeField] private float moveSpeedWhenCrouch = 3f;
     private Vector3 moveDirection;
     private Vector3 moveDirectionLerp;
 
@@ -25,10 +25,10 @@ public class PlayerControllerManeuver : MonoBehaviour
 
     [Header("Jump")]
     [SerializeField] private int jumpAmount = 1;
+    [SerializeField] private float jumpPower = 8f;
     private int jumpAmountCur;
 
     [Header("Slide")]
-    [SerializeField] private float jumpPower = 8f;
     [SerializeField] private float slidePower = 2.75f;
     private int slideAmountCur = 1;
     private readonly float slideDelay = 1.05f;
