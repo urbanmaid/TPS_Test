@@ -3,27 +3,40 @@ using UnityEngine;
 
 public class PlayerControllerAnimation : MonoBehaviour
 {
-    private PlayerControllerManeuver maneuver;
+    private IPlayerController playerController;
     [SerializeField] GameObject playerAvatar;
     [SerializeField] Animator animator;
 
     bool isAbleToWork = true;
 
-    internal void InitializeMe(PlayerControllerManeuver playerControllerManeuver)
+    internal void InitializeMe(IPlayerController iPlayerController)
     {
-        maneuver = playerControllerManeuver;
+        playerController = iPlayerController;
 
         if(playerAvatar == null) isAbleToWork = false;
 
-        maneuver.OnManeuverStateChanged += HandleManeuverStateChange;
+        playerController.OnManeuverStateChanged += HandleManeuverStateChange;
     }
 
     // Set direction of avatar
-    internal void SetDirection(float lookDirectionX)
+    internal void SetDirection()
     {
         if(isAbleToWork)
         {
-            playerAvatar.transform.rotation = Quaternion.Euler(0f, lookDirectionX, 0f);
+            playerAvatar.transform.rotation = Quaternion.Euler(0f, playerController.LookDirectionAvatarX, 0f);
+
+            /*
+            if(playerController.IsAiming)
+            {
+                // If in aim state, player avatar follows the lookDirectionX Completely
+                playerAvatar.transform.rotation = Quaternion.Euler(0f, playerController.LookDirectionX, 0f);
+            }
+            else
+            {
+                // Set Direction Offset with Move Direction and add with current lookDirectionX
+                playerAvatar.transform.rotation = Quaternion.Euler(0f, playerController.LookDirectionAvatarX, 0f);
+            }
+            */
         }
     }
 

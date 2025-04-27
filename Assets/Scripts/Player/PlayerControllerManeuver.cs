@@ -1,237 +1,224 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerControllerManeuver : MonoBehaviour
 {
-    #region Variables
+    private IPlayerController controller;
+    private Rigidbody rb;
 
-    [SerializeField] PlayerControllerWeapon playerWeaponManager;
-    internal PlayerControllerCamera playerControllerCamera;
-    [SerializeField] PlayerControllerStatus playerControllerStatus;
-    PlayerControllerAnimation playerControllerAnimation;
-    InputSystem_Actions inputActions;
-    Rigidbody rb;
-    Vector3 initPos;
+    [Header("General")]
+    private float lerpDelayMin = 10f;
+    [SerializeField] private float lerpDelay;
+    private float lerpDelayMax = 56.25f;
 
-    [Header("Camera")]
-    [SerializeField] GameObject playerCameraCoor;
-
-    [Header("Maneuver")]
-    [Tooltip("0 for death, 1 for alive, 2 for immovilized. 3 for jumping")]
-    public int maneuverStatus = 1; // Sets player movement
-    public bool isAiming = false; // Sets player aim pose
-    [Space]
-    [SerializeField] float lerpDelay = 8f;
-    [SerializeField] float moveSpeed = 8f;
-    [SerializeField] float moveSpeedWhenAim = 2.25f;
-    private Vector2 moveInput;
+    [Header("Move")]
+    [SerializeField] private float moveSpeed = 8f;
+    [SerializeField] private float moveSpeedWhenAim = 2.5f;
+    [SerializeField] private float moveSpeedWhenCrouch = 3f;
     private Vector3 moveDirection;
     private Vector3 moveDirectionLerp;
 
-    [Space]
-    [Tooltip("lookInput defines Input of camera direction, X for Horizontal, Y for vertical.")]
-    private Vector2 lookInput; //Input of camera direction, X for input
-    [SerializeField] float lookSensitivity = 2f;
-    public float lookDirectionX;
-    [SerializeField] float lookDirectionY;
+    [Header("Look")]
+    [SerializeField] private float lookSensitivity = 2f;
+    private readonly double invRadian = Math.PI / 180.0;
 
-    [Space]
-    [SerializeField] int jumpAmount = 1;
+    [Header("Jump")]
+    [SerializeField] private int jumpAmount = 1;
+    [SerializeField] private float jumpPower = 8f;
     private int jumpAmountCur;
-    [SerializeField] float jumpPower = 8f;
-    [SerializeField] float slidePower = 2.75f;
+
+    [Header("Slide")]
+    [SerializeField] private float slidePower = 2.75f;
     private int slideAmountCur = 1;
-    private float slideDelay = 1.05f;
-    private readonly double invRadian = (Math.PI / 180.0);
+    private readonly float slideDelay = 1.05f;
 
-    //[Header("Animation Connection")]
-    public event Action<int, bool> OnManeuverStateChanged;
-
-    #endregion
-    #region Initialization
-
-    void Start()
+    public void InitializeMe(IPlayerController controller)
     {
-        SetInitialComponenet();
-        SetInitialInputAction();
-    }
-
-    void SetInitialComponenet()
-    {
-        // Components
+        this.controller = controller;
         rb = GetComponent<Rigidbody>();
-        if(rb == null)
-        {
-            Debug.LogError("There are no Rigidbodies on player");
-        }
 
-        // Get other non-rb components
-        playerWeaponManager = GetComponent<PlayerControllerWeapon>();
-        playerControllerCamera = GetComponent<PlayerControllerCamera>();
-        playerControllerCamera.InitializeMe(this);
-        playerControllerStatus = GetComponent<PlayerControllerStatus>();
-        playerControllerStatus.InitializeMe(this);
-        playerControllerAnimation = GetComponent<PlayerControllerAnimation>();
-        playerControllerAnimation.InitializeMe(this);
-
-        // Variables
+        lerpDelay = lerpDelayMin;
         jumpAmountCur = jumpAmount;
-        initPos = transform.position;
     }
 
-    void SetInitialInputAction()
+    public void Move(Vector2 moveInput, bool isAiming)
     {
-        inputActions = new InputSystem_Actions();
-        if(inputActions != null)
+        if (controller.ManeuverStatus == 1)
         {
-            Debug.Log("inputActions has been loaded");
+            moveDirection = new Vector3(
+                moveInput.x * (float)Math.Cos(controller.LookDirectionX * invRadian) + moveInput.y * (float)Math.Sin(controller.LookDirectionX * invRadian),
+                0f,
+                moveInput.y * (float)Math.Cos(controller.LookDirectionX * invRadian) - moveInput.x * (float)Math.Sin(controller.LookDirectionX * invRadian)
+            ).normalized * (isAiming ? moveSpeedWhenAim : (controller.IsCrouching ? moveSpeedWhenCrouch : moveSpeed));
+
+            if (moveInput == Vector2.zero)
+            {
+                moveDirection = Vector3.zero;
+            }
+            moveDirectionLerp = Vector3.Lerp(moveDirectionLerp, moveDirection, Time.deltaTime * lerpDelayMin);
+
+            if (controller.CanMove)
+            {
+                if (moveDirectionLerp.magnitude < 0.01f)
+                {
+                    rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+                }
+                else
+                {
+                    rb.linearVelocity = new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z);
+                }
+                //transform.Translate(new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z) * Time.deltaTime);
+            }
         }
-
-        // Move
-        inputActions.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
-        inputActions.Player.Move.canceled += ctx => moveInput = Vector2.zero;
-
-        // Look
-        inputActions.Player.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
-        inputActions.Player.Look.canceled += ctx => lookInput = Vector2.zero;
-
-        // Jump
-        inputActions.Player.Jump.performed += ctx => Jump();
-        inputActions.Player.Slide.performed += ctx => Slide();
-
-        // Swap cam
-        inputActions.Player.Aim.performed += ctx => SetAim();
-        inputActions.Player.Aim.canceled += ctx => ResetAim();
-
-        inputActions.Player.Enable();
     }
 
-    internal void Respawn()
+    public void SetDirection(Vector2 lookInput)
     {
-        transform.position = initPos;
-        maneuverStatus = 1;
+        // Set X
+        controller.LookDirectionX += lookInput.x * lookSensitivity * Time.deltaTime;
+        if (controller.LookDirectionX > 180f) controller.LookDirectionX = -180f;
+        if (controller.LookDirectionX < -180f) controller.LookDirectionX = 180f;
 
-        Debug.Log("Respawned");
-    }
+        // Set Y
+        controller.LookDirectionY -= lookInput.y * lookSensitivity * Time.deltaTime;
+        controller.LookDirectionY = Mathf.Clamp(controller.LookDirectionY, -80f, 80f);
 
-    public void UpdateMe()
-    {
-        Move();
-        SetDirection();
-
-        // External Action
-        playerControllerAnimation.SetDirection(lookDirectionX);
-    }
-
-    #endregion
-    #region Maneuver
-    
-    void Move()
-    {
-        if(maneuverStatus == 1)
+        // Set Direction of Character X
+        // This parameter is only changed when player move and on the ground
+        if(controller.MoveInput.magnitude > 0.01f && controller.ManeuverStatus == 1)
         {
             /*
-            X - moveInput.x * sin(lookDirection) + ??
-            Y - 0
-            Z - moveInput.y * cos(lookDirection) + ??
-            whole math function is operated by radian so converted as invRadian
+            controller.LookDirectionAvatarX = Quaternion.LookRotation(new Vector3(
+                controller.MoveInput.x,
+                0,
+                controller.MoveInput.y
+            )).eulerAngles.y + controller.LookDirectionX;
             */
-            moveDirection = new Vector3(
-                moveInput.x * (float)Math.Cos(lookDirectionX * invRadian) + moveInput.y * (float)Math.Sin(lookDirectionX * invRadian), 
-                0f, 
-                moveInput.y * (float)Math.Cos(lookDirectionX * invRadian) - moveInput.x * (float)Math.Sin(lookDirectionX * invRadian)
-                ).normalized
-                 * (isAiming? moveSpeedWhenAim: moveSpeed);
-            moveDirectionLerp = Vector3.Lerp(moveDirectionLerp, moveDirection, Time.deltaTime * lerpDelay);
 
-            //rotate the coordinate of movDirection as new Vector3(0f, lookDirection, 0f)
-            rb.linearVelocity = new Vector3(moveDirectionLerp.x, rb.linearVelocity.y, moveDirectionLerp.z);
+            // If in aim state, player avatar follows the lookDirectionX Completely
+            // If not, Set Direction Offset with Move Direction and add with current lookDirectionX
+            controller.LookDirectionAvatarX = Mathf.LerpAngle(controller.LookDirectionAvatarX, 
+            (!controller.IsAiming ? Quaternion.LookRotation(new Vector3(
+                controller.MoveInput.x,
+                0,
+                controller.MoveInput.y
+            )).eulerAngles.y : 0) + controller.LookDirectionX,
+            lerpDelay * Time.deltaTime);
         }
+
+        if(controller.IsAiming)
+        {
+            controller.LookDirectionAvatarX = Mathf.LerpAngle(controller.LookDirectionAvatarX, 
+            controller.LookDirectionX,
+            lerpDelay * Time.deltaTime);
+        }
+
     }
 
-    void SetDirection()
+    public void Jump()
     {
-        // Set value of Rotate Direction X
-        lookDirectionX += lookInput.x * lookSensitivity * Time.deltaTime;
-        if (lookDirectionX > 180f) lookDirectionX = -180f;
-        if (lookDirectionX < -180f) lookDirectionX = 180f;
-
-        // Set value of Rotate Direction Y
-        lookDirectionY -= lookInput.y * lookSensitivity * Time.deltaTime;
-        lookDirectionY = Mathf.Clamp(lookDirectionY, -80f, 80f);
-        
-        // Set Camera Direction
-        playerCameraCoor.transform.rotation = Quaternion.Euler(
-            lookDirectionY, 
-            lookDirectionX, 0f
-        );
-    }
-
-    #endregion
-    #region Additional Action
-    private void Jump()
-    {
-        if(jumpAmountCur > 0)
+        if (jumpAmountCur > 0 && slideAmountCur > 0)
         {
             jumpAmountCur--;
-            maneuverStatus = 3;
-            rb.AddForce(Vector3.up * jumpPower + new Vector3(moveDirection.x, 0, moveDirection.z).normalized * (jumpPower / 2), ForceMode.VelocityChange);
-            //Debug.Log("Jumping Now");
+            controller.ManeuverStatus = 3;
+
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+            rb.AddForce(Vector3.up * jumpPower + new Vector3(
+                (float)Math.Sin(controller.LookDirectionAvatarX * invRadian), 
+                0, 
+                (float)Math.Cos(controller.LookDirectionAvatarX * invRadian)
+            ) * slidePower, ForceMode.VelocityChange);
+            controller.NotifyStateChange();
         }
     }
 
-    private void Slide()
+    public void Slide(bool isAiming)
     {
-        if(!isAiming)
+        if (!isAiming)
         {
             StartCoroutine(SlideCo());
         }
     }
 
-    // Coroutine of Slide
-    IEnumerator SlideCo()
+    private IEnumerator SlideCo()
     {
-        if(slideAmountCur > 0)
+        if (slideAmountCur > 0 && jumpAmountCur > 0 )
         {
-            maneuverStatus = 2;
+            controller.ManeuverStatus = 2;
             slideAmountCur = 0;
-            rb.AddForce(new Vector3(moveDirection.x, 0, moveDirection.z).normalized * slidePower, ForceMode.VelocityChange);
-            
+
+            // Set Slide Direction which player avatar is heading
+            rb.AddForce(1.25f * slidePower * new Vector3(
+                (float)Math.Sin(controller.LookDirectionAvatarX * invRadian), 
+                0, 
+                (float)Math.Cos(controller.LookDirectionAvatarX * invRadian)
+            ).normalized, ForceMode.VelocityChange);
+            controller.NotifyStateChange();
+
             yield return new WaitForSeconds(slideDelay);
-            maneuverStatus = 1;
+            controller.ManeuverStatus = 1;
+            controller.NotifyStateChange();
 
             yield return new WaitForSeconds(slideDelay * 0.4f);
             slideAmountCur = 1;
         }
     }
 
-    void SetAim()
+    public void Crouch(bool value)
     {
-        if(maneuverStatus == 1)
+        controller.IsCrouching = value;
+    }
+
+    public void SetAim(int maneuverStatus)
+    {
+        if (maneuverStatus == 1)
         {
-            isAiming = true;
-            if(playerControllerCamera) playerControllerCamera.SetAim();
+            controller.IsAiming = true;
+            controller.Camera?.SetAim();
+            controller.NotifyStateChange();
+
+            // Set Lerp Delay as Arm Mode
+            StartCoroutine(SetLerpDelayAim(true));
         }
     }
 
-    void ResetAim()
+    public void ResetAim()
     {
-        isAiming = false;
-        if(playerControllerCamera) playerControllerCamera.ResetAim();
+        controller.IsAiming = false;
+        controller.Camera?.ResetAim();
+        controller.NotifyStateChange();
+
+        // Set Lerp Delay as Arm Mode
+        StartCoroutine(SetLerpDelayAim(false));
     }
 
-    private void NotifyStateChange()
+    // Changes Lerp Delay Continuously
+    // True for Arm, False for Disarm
+    private IEnumerator SetLerpDelayAim(bool value)
     {
-        OnManeuverStateChanged?.Invoke(maneuverStatus, isAiming);
+        float valStart = value ? lerpDelayMin : lerpDelayMax;
+        float valFinish = value ? lerpDelayMax : lerpDelayMin;
+        float valReachingDuration = value ? 0.25f : 0.1f;
+        float valCursor = 0;
+
+        while(valCursor < 1)
+        {
+            valCursor += Time.deltaTime / valReachingDuration;
+            lerpDelay = Mathf.Lerp(valStart, valFinish, valCursor);
+            yield return new WaitForEndOfFrame();
+        }
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision)
     {
-        maneuverStatus = 1;
+        ResetJump();
+    }
+
+    public void ResetJump()
+    {
+        controller.ManeuverStatus = 1;
         jumpAmountCur = jumpAmount;
-        //Debug.Log("Landed");
+        controller.NotifyStateChange();
     }
-    #endregion
 }

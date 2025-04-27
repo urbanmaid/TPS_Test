@@ -8,7 +8,7 @@ public class PlayerControllerCamera : MonoBehaviour
 {
     [SerializeField] GameObject[] cameraPositionCriterion;
     [SerializeField] GameObject[] cameraPositionCriterionWhenAiming;
-    private PlayerControllerManeuver maneuver;
+    private IPlayerController playerController;
     private GameObject deathCamCinemachine;
 
     [SerializeField] int cameraPosIndex = 0;
@@ -17,9 +17,9 @@ public class PlayerControllerCamera : MonoBehaviour
     float shakeMagnitude = 0.1f;
 
     // Initialization of camera that defines integrity
-    internal void InitializeMe(PlayerControllerManeuver playerControllerManeuver)
+    internal void InitializeMe(IPlayerController playerControllerBase)
     {
-        maneuver = playerControllerManeuver;
+        playerController = playerControllerBase;
         cameraPosIndexMax = cameraPositionCriterion.Length - 1;
         if(cameraPosIndexMax == -1)
         {
