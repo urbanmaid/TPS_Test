@@ -18,8 +18,8 @@ public class PlayerControllerBaseNetwork : NetworkBehaviour, IPlayerController
     [SerializeField] private PlayerControllerStatus playerControllerStatus;
     private PlayerControllerAnimation playerControllerAnimation;
     private InputSystem_Actions inputActions;
-    private Vector2 moveInput;
-    private Vector2 lookInput;
+    [Networked] Vector2 moveInput { get; set; }
+    [Networked] Vector2 lookInput { get; set; }
     [SerializeField] private GameObject playerCameraCoor;
 
     public event Action<int, bool> OnManeuverStateChanged;
